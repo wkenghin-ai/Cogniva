@@ -286,11 +286,11 @@ export const DetailSceneModal: React.FC<DetailSceneModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, onSelectHotspot, prevHotspot, nextHotspot, isDemoOpen]);
 
-  // Calculate offset from viewport center to the clicked box for a smooth origin-to-center spring expansion
+  // Subtle directional pull toward the clicked box so the modal springs out and collapses back naturally
   const offsetX =
-    typeof window !== 'undefined' ? (originX - window.innerWidth / 2) * 0.72 : 0;
+    typeof window !== 'undefined' ? (originX - window.innerWidth / 2) * 0.28 : 0;
   const offsetY =
-    typeof window !== 'undefined' ? (originY - window.innerHeight / 2) * 0.72 : 0;
+    typeof window !== 'undefined' ? (originY - window.innerHeight / 2) * 0.28 : 0;
 
   return (
     <motion.div
@@ -301,37 +301,44 @@ export const DetailSceneModal: React.FC<DetailSceneModalProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.22, ease: 'easeOut' }}
+      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xl text-slate-100 flex items-center justify-center p-3 sm:p-6"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      {/* Expanded Card Window Smoothly Springing Out of the Clicked Box */}
+      {/* Expanded Card Window with Subtle, Fluid Spring Expand/Collapse Physics */}
       <motion.div
+        layout
         initial={{
           opacity: 0,
           x: offsetX,
-          y: offsetY,
-          scale: 0.28
+          y: offsetY + 14,
+          scale: 0.86
         }}
         animate={{
           opacity: 1,
           x: 0,
           y: 0,
-          scale: 1
+          scale: 1,
+          transition: {
+            type: 'spring',
+            stiffness: 270,
+            damping: 23,
+            mass: 0.85
+          }
         }}
         exit={{
           opacity: 0,
-          x: offsetX * 0.6,
-          y: offsetY * 0.6,
-          scale: 0.35
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 350,
-          damping: 30,
-          mass: 0.75
+          x: offsetX * 0.75,
+          y: offsetY * 0.75 + 10,
+          scale: 0.88,
+          transition: {
+            type: 'spring',
+            stiffness: 320,
+            damping: 28,
+            mass: 0.75
+          }
         }}
         style={{
           borderColor: `${hotspot.accent}66`,
@@ -413,25 +420,30 @@ export const DetailSceneModal: React.FC<DetailSceneModalProps> = ({
           </div>
         </div>
 
-        {/* Smooth 60fps Glide Stage when switching between Hotspots */}
+        {/* Subtle Spring Glide Stage when switching between Hotspots */}
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={hotspot.id}
             initial={{
               opacity: 0,
-              x: slideDirection * 32
+              x: slideDirection * 24,
+              scale: 0.98
             }}
             animate={{
               opacity: 1,
-              x: 0
+              x: 0,
+              scale: 1
             }}
             exit={{
               opacity: 0,
-              x: -slideDirection * 32
+              x: -slideDirection * 24,
+              scale: 0.98
             }}
             transition={{
-              duration: 0.22,
-              ease: [0.22, 1, 0.36, 1]
+              type: 'spring',
+              stiffness: 310,
+              damping: 27,
+              mass: 0.8
             }}
           >
             {/* Header: Icon + Title */}
@@ -480,69 +492,86 @@ export const DetailSceneModal: React.FC<DetailSceneModalProps> = ({
             {/* CONTENT BY TYPE */}
             {hotspot.gameData ? (
               <div className="space-y-6">
-                {!isDemoOpen ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    <div className="lg:col-span-5 rounded-3xl border border-white/15 bg-slate-900/85 p-5 space-y-4">
-                      <GameCoverSvg
-                        demoType={hotspot.gameData.demoType as CoreDemoType | undefined}
-                        accent={hotspot.accent}
-                      />
-                      <p className="text-[20px] font-semibold text-teal-200 leading-snug">
-                        {hotspot.gameData.hook}
-                      </p>
-
-                      {hotspot.gameData.demoType && (
-                        <button
-                          type="button"
-                          data-testid="try-game-demo-button"
-                          onClick={() => setIsDemoOpen(true)}
-                          className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-teal-400 to-sky-400 px-6 py-4 text-xl font-black text-slate-950 shadow-xl shadow-teal-950/60 hover:brightness-110 transition cursor-pointer"
-                        >
-                          <Gamepad2 className="w-6 h-6" />
-                          <span>Launch Playable Test Game</span>
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="lg:col-span-7 space-y-3.5">
-                      <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5">
-                        <div className="text-xs font-bold uppercase tracking-widest text-sky-300 mb-1.5">
-                          How you play
-                        </div>
-                        <p className="text-[20px] leading-relaxed text-slate-100">
-                          {hotspot.gameData.howYouPlay}
+                <AnimatePresence mode="wait" initial={false}>
+                  {!isDemoOpen ? (
+                    <motion.div
+                      key="game-overview"
+                      initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96, y: -8 }}
+                      transition={{ type: 'spring', stiffness: 290, damping: 25, mass: 0.8 }}
+                      className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"
+                    >
+                      <div className="lg:col-span-5 rounded-3xl border border-white/15 bg-slate-900/85 p-5 space-y-4">
+                        <GameCoverSvg
+                          demoType={hotspot.gameData.demoType as CoreDemoType | undefined}
+                          accent={hotspot.accent}
+                        />
+                        <p className="text-[20px] font-semibold text-teal-200 leading-snug">
+                          {hotspot.gameData.hook}
                         </p>
+
+                        {hotspot.gameData.demoType && (
+                          <button
+                            type="button"
+                            data-testid="try-game-demo-button"
+                            onClick={() => setIsDemoOpen(true)}
+                            className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-teal-400 to-sky-400 px-6 py-4 text-xl font-black text-slate-950 shadow-xl shadow-teal-950/60 hover:brightness-110 transition cursor-pointer"
+                          >
+                            <Gamepad2 className="w-6 h-6" />
+                            <span>Launch Playable Test Game</span>
+                          </button>
+                        )}
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5">
-                        <div className="text-xs font-bold uppercase tracking-widest text-teal-300 mb-1.5">
-                          What the AI does
+                      <div className="lg:col-span-7 space-y-3.5">
+                        <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5">
+                          <div className="text-xs font-bold uppercase tracking-widest text-sky-300 mb-1.5">
+                            How you play
+                          </div>
+                          <p className="text-[20px] leading-relaxed text-slate-100">
+                            {hotspot.gameData.howYouPlay}
+                          </p>
                         </div>
-                        <p className="text-[20px] leading-relaxed text-slate-100">
-                          {hotspot.gameData.whatAiDoes}
-                        </p>
-                      </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5">
-                        <div className="text-xs font-bold uppercase tracking-widest text-amber-300 mb-1.5">
-                          What it exercises
+                        <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5">
+                          <div className="text-xs font-bold uppercase tracking-widest text-teal-300 mb-1.5">
+                            What the AI does
+                          </div>
+                          <p className="text-[20px] leading-relaxed text-slate-100">
+                            {hotspot.gameData.whatAiDoes}
+                          </p>
                         </div>
-                        <p className="text-[20px] leading-relaxed text-slate-100">
-                          {hotspot.gameData.whatItExercises}
-                        </p>
+
+                        <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5">
+                          <div className="text-xs font-bold uppercase tracking-widest text-amber-300 mb-1.5">
+                            What it exercises
+                          </div>
+                          <p className="text-[20px] leading-relaxed text-slate-100">
+                            {hotspot.gameData.whatItExercises}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ) : (
-                  hotspot.gameData.demoType && (
-                    <PlayableGameStage
-                      demoType={hotspot.gameData.demoType}
-                      gameTitle={hotspot.title}
-                      howYouPlay={hotspot.gameData.howYouPlay}
-                      onClose={() => setIsDemoOpen(false)}
-                    />
-                  )
-                )}
+                    </motion.div>
+                  ) : (
+                    hotspot.gameData.demoType && (
+                      <motion.div
+                        key="game-playable-stage"
+                        initial={{ opacity: 0, scale: 0.94, y: 12 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                        transition={{ type: 'spring', stiffness: 280, damping: 24, mass: 0.85 }}
+                      >
+                        <PlayableGameStage
+                          demoType={hotspot.gameData.demoType}
+                          gameTitle={hotspot.title}
+                          howYouPlay={hotspot.gameData.howYouPlay}
+                          onClose={() => setIsDemoOpen(false)}
+                        />
+                      </motion.div>
+                    )
+                  )}
+                </AnimatePresence>
               </div>
             ) : hotspot.specialWidget === 'source-card' && hotspot.sourceData ? (
               <div className="rounded-3xl border border-white/15 bg-slate-900/85 p-6 sm:p-7 space-y-5">
