@@ -195,7 +195,7 @@ export default function App() {
         onClick={(e) => handleBoxClick(id, e)}
         className={`canva-box-interactive group flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left cursor-pointer ${variantStyles}`}
       >
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
           <span
             className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg"
             style={{
@@ -203,16 +203,16 @@ export default function App() {
               color: variant === 'navy' ? '#38BDF8' : h.accent
             }}
           >
-            <HotspotIcon name={h.icon} className="w-3.5 h-3.5" />
+            <HotspotIcon name={h.icon} className="w-4 h-4" />
           </span>
           <div className="min-w-0">
-            <div className="text-[12.5px] font-extrabold leading-tight truncate">
+            <div className="text-[14px] font-extrabold leading-snug truncate">
               {customLabel || h.label}
             </div>
             {subtitle && (
               <div
-                className={`text-[10.5px] leading-tight truncate mt-0.5 ${
-                  variant === 'navy' ? 'text-sky-200/85' : 'text-slate-500'
+                className={`text-[12px] font-medium leading-snug truncate mt-0.5 ${
+                  variant === 'navy' ? 'text-sky-200/90' : 'text-slate-600'
                 }`}
               >
                 {subtitle}
@@ -220,7 +220,7 @@ export default function App() {
             )}
           </div>
         </div>
-        <span className="shrink-0 flex h-4 w-4 items-center justify-center rounded-full bg-black/5 text-[10px] font-black opacity-65 group-hover:opacity-100 group-hover:bg-sky-500 group-hover:text-white transition">
+        <span className="shrink-0 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-black/5 text-[11px] font-black opacity-70 group-hover:opacity-100 group-hover:bg-sky-500 group-hover:text-white transition">
           ↗
         </span>
       </button>
@@ -251,10 +251,6 @@ export default function App() {
             <span className="text-sm font-extrabold text-white">
               Page 1 — Cogniva Interactive A3 Poster (CC0007)
             </span>
-            <span className="hidden lg:inline-flex items-center gap-1 rounded-full bg-teal-400/15 border border-teal-400/40 px-2.5 py-0.5 text-[11px] font-bold text-teal-300">
-              <Sparkles className="w-3 h-3 text-amber-300" />
-              <span>Click any box on the A3 sheet to smoothly expand</span>
-            </span>
           </div>
         </div>
 
@@ -264,35 +260,35 @@ export default function App() {
             <button
               type="button"
               onClick={(e) => handleBoxClick('1.1', e)}
-              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-[11px] font-bold text-slate-200 transition cursor-pointer"
+              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-xs font-bold text-slate-200 transition cursor-pointer"
             >
               1. Problem
             </button>
             <button
               type="button"
               onClick={(e) => handleBoxClick('2.3', e)}
-              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-[11px] font-bold text-teal-300 transition cursor-pointer"
+              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-xs font-bold text-teal-300 transition cursor-pointer"
             >
               2. Solution &amp; Games
             </button>
             <button
               type="button"
               onClick={(e) => handleBoxClick('3.1', e)}
-              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-[11px] font-bold text-sky-300 transition cursor-pointer"
+              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-xs font-bold text-sky-300 transition cursor-pointer"
             >
               3. Three Lenses
             </button>
             <button
               type="button"
               onClick={(e) => handleBoxClick('4.1', e)}
-              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300 transition cursor-pointer"
+              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-xs font-bold text-emerald-300 transition cursor-pointer"
             >
               4. Advantages
             </button>
             <button
               type="button"
               onClick={(e) => handleBoxClick('5.1', e)}
-              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-[11px] font-bold text-rose-300 transition cursor-pointer"
+              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-xs font-bold text-rose-300 transition cursor-pointer"
             >
               5. Limitations
             </button>
@@ -384,7 +380,7 @@ export default function App() {
              ================================================================= */}
           <div
             className={`relative w-full overflow-hidden rounded-2xl border-2 border-white shadow-md shrink-0 ${
-              orientation === 'landscape' ? 'h-[195px]' : 'h-[235px]'
+              orientation === 'landscape' ? 'h-[190px]' : 'h-[230px]'
             }`}
           >
             <img
@@ -393,13 +389,13 @@ export default function App() {
               className="w-full h-full object-cover object-center"
             />
 
-            <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-[#071F3D]/90 border border-cyan-300/50 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wider text-cyan-200 backdrop-blur-md shadow">
+            <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-[#071F3D]/90 border border-cyan-300/50 px-3.5 py-1 text-[13px] font-extrabold uppercase tracking-wider text-cyan-200 backdrop-blur-md shadow">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>NTU CC0007 · Gamified &amp; AI-Assisted Cognitive Rehabilitation</span>
             </div>
 
             <div className="absolute bottom-2.5 left-3 right-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-[#071F3D]/85 border border-white/20 px-3 py-1 text-[11px] font-bold text-white backdrop-blur-md">
+              <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-[#071F3D]/85 border border-white/20 px-3 py-1 text-[12.5px] font-bold text-white backdrop-blur-md">
                 <span className="text-cyan-300 font-black">Team:</span>
                 <span>{POSTER_DATA.hero.team.join(' · ')}</span>
               </div>
@@ -408,17 +404,17 @@ export default function App() {
                 <button
                   type="button"
                   onClick={(e) => handleBoxClick('2.3', e)}
-                  className="canva-box-interactive inline-flex items-center gap-1.5 rounded-xl bg-amber-400 px-3 py-1 text-xs font-black text-slate-950 shadow-md cursor-pointer"
+                  className="canva-box-interactive inline-flex items-center gap-1.5 rounded-xl bg-amber-400 px-3 py-1.5 text-[13px] font-black text-slate-950 shadow-md cursor-pointer"
                 >
-                  <Gamepad2 className="w-3.5 h-3.5" />
+                  <Gamepad2 className="w-4 h-4" />
                   <span>Play Mahjong Test Game</span>
                 </button>
                 <button
                   type="button"
                   onClick={(e) => handleBoxClick('2.4', e)}
-                  className="canva-box-interactive inline-flex items-center gap-1.5 rounded-xl bg-cyan-400 px-3 py-1 text-xs font-black text-slate-950 shadow-md cursor-pointer"
+                  className="canva-box-interactive inline-flex items-center gap-1.5 rounded-xl bg-cyan-400 px-3 py-1.5 text-[13px] font-black text-slate-950 shadow-md cursor-pointer"
                 >
-                  <Eye className="w-3.5 h-3.5" />
+                  <Eye className="w-4 h-4" />
                   <span>Play Find the Differences</span>
                 </button>
               </div>
@@ -435,23 +431,20 @@ export default function App() {
             <div className="col-span-7 rounded-[22px] bg-white border border-cyan-200/80 px-5 py-3.5 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-[20px] font-extrabold text-[#1E88E5] tracking-tight leading-snug">
-                    Focused problem (Proof why)
+                  <h2 className="text-[21px] font-extrabold text-[#1E88E5] tracking-tight leading-snug">
+                    01 · Focused Problem (Proof Why)
                   </h2>
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full">
-                    01 · Problem Statement
-                  </span>
                 </div>
-                <div className="text-[16px] font-extrabold text-[#071F3D] mt-0.5">
+                <div className="text-[17px] font-extrabold text-[#071F3D] mt-0.5">
                   The struggle to keep going at home
                 </div>
-                <p className="text-[13px] font-medium text-slate-700 leading-snug mt-0.5">
+                <p className="text-[14.5px] font-medium text-slate-700 leading-snug mt-0.5">
                   Digital cognitive interventions show promise, but regular participation can be
                   difficult for older adults with early-stage dementia in Singapore (53,000 in 2020
                   → 80,000 by 2030).
                 </p>
                 <div className="h-[2px] w-full bg-[#1E88E5]/60 my-2 rounded-full" />
-                <p className="text-[12.5px] font-bold text-[#1E88E5]">
+                <p className="text-[14px] font-bold text-[#1E88E5]">
                   Our focus: usability, motivation and personalisation in everyday routines.
                 </p>
               </div>
@@ -476,15 +469,12 @@ export default function App() {
             <div className="col-span-5 rounded-[22px] bg-[#061F3E] text-white px-5 py-3.5 shadow-md flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-[19px] font-extrabold text-[#38BDF8] tracking-tight">
+                  <h2 className="text-[20px] font-extrabold text-[#38BDF8] tracking-tight">
                     Three Participation Barriers
                   </h2>
-                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-cyan-200 bg-white/10 px-2.5 py-0.5 rounded-full">
-                    Why Tools Fail
-                  </span>
                 </div>
 
-                <ul className="mt-1.5 space-y-1 text-[12.5px] leading-tight">
+                <ul className="mt-1.5 space-y-1.5 text-[14px] leading-snug">
                   <li className="flex items-start gap-1.5">
                     <span className="text-cyan-400 font-black">•</span>
                     <div>
@@ -544,10 +534,9 @@ export default function App() {
                --------------------------------------------------------------- */}
             <div className="col-span-4 flex flex-col justify-between gap-2.5 min-h-0">
               <div className="flex items-center justify-between px-1">
-                <h3 className="text-[16px] font-black tracking-wide uppercase text-[#071F3D]">
+                <h3 className="text-[17.5px] font-black tracking-wide uppercase text-[#071F3D]">
                   03 · INTERDISCIPLINARY LENSES
                 </h3>
-                <span className="text-[11px] font-bold text-sky-800">Click any box to expand</span>
               </div>
 
               {/* STEM Card */}
@@ -557,10 +546,7 @@ export default function App() {
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-[16px] font-black text-[#071F3D] leading-none">STEM</h4>
-                    <span className="text-[11px] font-semibold text-slate-500">
-                      Adaptive Algorithms &amp; On-Device AI
-                    </span>
+                    <h4 className="text-[17.5px] font-black text-[#071F3D] leading-tight">STEM</h4>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-1.5 mt-1.5">
@@ -577,12 +563,9 @@ export default function App() {
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-[16px] font-black text-[#071F3D] leading-none">
+                    <h4 className="text-[17.5px] font-black text-[#071F3D] leading-tight">
                       BIZ / GOV
                     </h4>
-                    <span className="text-[11px] font-semibold text-slate-500">
-                      National Ageing Strategy &amp; Healthcare AI Rules
-                    </span>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-1.5 mt-1.5">
@@ -599,12 +582,9 @@ export default function App() {
                     <Heart className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-[16px] font-black text-[#071F3D] leading-none">
+                    <h4 className="text-[17.5px] font-black text-[#071F3D] leading-tight">
                       SOCIAL SCIENCE
                     </h4>
-                    <span className="text-[11px] font-semibold text-slate-500">
-                      Senior Usability, Cultural Dignity &amp; Caregivers
-                    </span>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-1.5 mt-1.5">
@@ -622,23 +602,17 @@ export default function App() {
               {/* CATEGORY 4: ADVANTAGES */}
               <div className="flex-1 rounded-[20px] bg-white border-2 border-emerald-200 px-4 py-3 shadow-sm flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <div className="flex items-center gap-2.5">
                       <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500 text-white shadow">
                         <Award className="w-4 h-4" />
                       </span>
                       <div>
-                        <h3 className="text-[16px] font-black uppercase text-[#071F3D] leading-none">
+                        <h3 className="text-[17.5px] font-black uppercase text-[#071F3D] leading-tight">
                           04 · Advantages
                         </h3>
-                        <span className="text-[11px] font-semibold text-emerald-700">
-                          Why our integrated model works at home
-                        </span>
                       </div>
                     </div>
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10.5px] font-extrabold text-emerald-800">
-                      4 Strengths
-                    </span>
                   </div>
                 </div>
 
@@ -672,24 +646,21 @@ export default function App() {
 
               {/* CATEGORY 5: POTENTIAL LIMITATIONS */}
               <div className="flex-1 rounded-[20px] bg-[#061F3E] text-white border-2 border-rose-400/35 px-4 py-3 shadow-md flex flex-col justify-between">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2.5">
                     <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-500 text-white shadow">
                       <AlertTriangle className="w-4 h-4" />
                     </span>
                     <div>
-                      <h3 className="text-[16px] font-black uppercase text-rose-300 leading-none">
+                      <h3 className="text-[17.5px] font-black uppercase text-rose-300 leading-tight">
                         05 · Potential Limitations
                       </h3>
-                      <span className="text-[11px] font-medium text-slate-300">
-                        Honest boundaries &amp; evaluation scope
-                      </span>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={(e) => handleBoxClick('9.1', e)}
-                    className="canva-box-interactive rounded-lg bg-amber-400 px-2.5 py-1 text-[10.5px] font-black text-slate-950 cursor-pointer"
+                    className="canva-box-interactive rounded-lg bg-amber-400 px-3 py-1 text-[12px] font-black text-slate-950 cursor-pointer"
                   >
                     18 Sources →
                   </button>
@@ -731,21 +702,15 @@ export default function App() {
               <div className="relative flex-1 rounded-[20px] bg-white border-2 border-cyan-300 p-3 shadow-md flex flex-col justify-between overflow-hidden min-h-0">
                 <div className="flex items-center justify-between px-1 mb-1.5 shrink-0">
                   <div>
-                    <h3 className="text-[15.5px] font-black uppercase text-[#071F3D] leading-none">
+                    <h3 className="text-[17px] font-black uppercase text-[#071F3D] leading-tight">
                       02 · Solution &amp; Playable Test Games
                     </h3>
-                    <span className="text-[11px] font-bold text-[#1E88E5]">
-                      Click any callout on the phone or test game box below
-                    </span>
                   </div>
-                  <span className="rounded-full bg-teal-100 border border-teal-400 px-2.5 py-0.5 text-[10.5px] font-black text-teal-900">
-                    5 Test Games
-                  </span>
                 </div>
 
                 {/* Top 2 Solution Core Pillar Boxes */}
                 <div className="grid grid-cols-2 gap-1.5 mb-2 shrink-0">
-                  {renderMiniBox('2.1', "2.1 AI Activity Guide", 'teal', "'Help me understand'")}
+                  {renderMiniBox('2.1', '2.1 AI Activity Guide', 'teal', "'Help me understand'")}
                   {renderMiniBox('2.2', '2.2 Adaptive Support', 'emerald', '75%–85% Comfort Band')}
                 </div>
 
@@ -797,9 +762,6 @@ export default function App() {
 
                 {/* Clickable Grid for the 5 Playable Test Games */}
                 <div className="mt-2 pt-2 border-t border-cyan-100 shrink-0">
-                  <div className="text-[10.5px] font-black uppercase tracking-wider text-slate-500 mb-1.5 px-0.5">
-                    Click any test game below to launch its playable demo:
-                  </div>
                   <div className="grid grid-cols-2 gap-1.5">
                     {renderMiniBox('2.3', 'Game 1: Mahjong Matching ★', 'amber')}
                     {renderMiniBox('2.4', 'Game 2: Find Differences ★', 'teal')}
