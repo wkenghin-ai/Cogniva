@@ -21,7 +21,6 @@ import {
   selectTile,
   triggerGentleHint
 } from '../game/mahjongLogic';
-import { DogMascot } from './DogMascot';
 
 export type CoreDemoType =
   | 'spot-diff'
@@ -863,15 +862,13 @@ export const PlayableGameStage: React.FC<PlayableGameStageProps> = ({
         </div>
       )}
 
-      {/* Post-Game Cheering Dog Mascot & Preference Rating */}
+      {/* Post-Game Completion & Preference Rating */}
       {isCompleted && (
         <div className="mt-6 rounded-3xl border border-amber-400/50 bg-gradient-to-br from-teal-950/90 via-slate-900 to-amber-950/40 p-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <DogMascot
-              mode="cheer"
-              size="md"
-              speechText="Wonderful job! Every calm session helps keep your mind active!"
-            />
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-emerald-400/20 border-2 border-emerald-400 text-emerald-300 shadow-lg">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
 
             <div className="flex-1 text-center md:text-left">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-300 mb-1">

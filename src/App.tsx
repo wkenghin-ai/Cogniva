@@ -1,276 +1,126 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence } from 'motion/react';
 import {
-  ArrowUp,
-  Bell,
+  AlertTriangle,
+  Award,
   BookOpen,
-  CheckCircle2,
-  ChevronDown,
-  Compass,
-  Filter,
+  Eye,
   Gamepad2,
-  Home,
-  Lock,
+  Heart,
+  Maximize2,
+  Minimize2,
+  Printer,
   ShieldCheck,
-  Smartphone,
-  Sparkles,
-  Unlock,
-  Users
+  Sparkles
 } from 'lucide-react';
-import { DetailSceneModal } from './components/DetailSceneModal';
-import { DogMascot } from './components/DogMascot';
+import { ClickBurstEvent, ClickTransitionFX } from './components/ClickTransitionFX';
+import { DetailSceneModal, SourceBoxRect } from './components/DetailSceneModal';
 import { HotspotIcon } from './components/HotspotIcon';
 import { DiveCanvasState, WorldCanvas } from './components/WorldCanvas';
-import {
-  findHotspotById,
-  HotspotItem,
-  LensCategory,
-  POSTER_DATA
-} from './data/posterData';
+import { findHotspotById, HotspotItem, POSTER_DATA } from './data/posterData';
 
-/**
- * TWEAKABLE TRANSITION CONSTANTS
- * Change DIVE_PRE_DELAY_MS to adjust how long the camera dolly/warp plays before the circular reveal opens.
- */
-export const DIVE_PRE_DELAY_MS = 240;
-
-interface MagneticHotspotButtonProps {
-  hotspot: HotspotItem;
-  index: number;
-  isDivingOut: boolean;
-  isActiveTarget: boolean;
-  onDive: (hotspot: HotspotItem, e: React.MouseEvent<HTMLButtonElement>) => void;
-  variant?: 'default' | 'compact' | 'shield' | 'star';
-}
-
-/**
- * Surface Hotspot Component:
- * Strictly displays ONLY the pulsing icon ring, short point label (max 6 words),
- * and optional 1-line hover/focus teaser. Never displays the long explanation on the surface.
- */
-const MagneticHotspotButton: React.FC<MagneticHotspotButtonProps> = ({
-  hotspot,
-  index,
-  isDivingOut,
-  isActiveTarget,
-  onDive,
-  variant = 'default'
-}) => {
-  const btnRef = useRef<HTMLButtonElement | null>(null);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!btnRef.current) return;
-    const rect = btnRef.current.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = (e.clientX - cx) * 0.14;
-    const dy = (e.clientY - cy) * 0.14;
-    setOffset({ x: dx, y: dy });
-  };
-
-  const handleMouseLeave = () => {
-    setOffset({ x: 0, y: 0 });
-  };
-
-  return (
-    <button
-      ref={btnRef}
-      type="button"
-      data-testid={`hotspot-${hotspot.id}`}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      onClick={(e) => onDive(hotspot, e)}
-      style={{
-        transform: isDivingOut
-          ? isActiveTarget
-            ? 'scale(1.28)'
-            : 'scale(0.82)'
-          : `translate3d(${offset.x}px, ${offset.y}px, 0)`,
-        opacity: isDivingOut && !isActiveTarget ? 0 : 1,
-        animationDelay: `${(index % 6) * 0.35}s`
-      }}
-      className={`hotspot-drift group relative flex flex-col items-center text-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 cursor-pointer ${
-        variant === 'shield'
-          ? 'rounded-3xl border-2 border-emerald-400/70 bg-emerald-950/50 p-6 shadow-[0_0_40px_rgba(16,185,129,0.28)]'
-          : variant === 'compact' || variant === 'star'
-          ? 'rounded-2xl border border-white/15 bg-slate-900/75 px-4 py-3.5 hover:border-teal-400/60 backdrop-blur-md'
-          : hotspot.isHighlighted
-          ? 'rounded-3xl border-2 border-amber-400/70 bg-slate-900/85 p-5 shadow-[0_0_35px_rgba(245,158,11,0.22)] backdrop-blur-md'
-          : 'rounded-3xl border border-white/15 bg-slate-900/75 p-5 hover:border-white/35 backdrop-blur-md shadow-xl'
-      }`}
-    >
-      {/* Pulsing Ring + Icon */}
-      <div className="relative mb-3 flex items-center justify-center">
-        <span
-          aria-hidden="true"
-          className="absolute inset-0 rounded-full opacity-40 group-hover:opacity-75 group-hover:scale-125 transition-all duration-500 animate-ping"
-          style={{
-            backgroundColor: hotspot.accent,
-            animationDuration: '3.2s'
-          }}
-        />
-        <span
-          aria-hidden="true"
-          className="relative flex h-14 w-14 items-center justify-center rounded-full border-2 shadow-lg transition-transform duration-300 group-hover:scale-110"
-          style={{
-            backgroundColor: `${hotspot.accent}24`,
-            borderColor: hotspot.accent,
-            boxShadow: `0 0 22px ${hotspot.accent}44`
-          }}
-        >
-          <HotspotIcon
-            name={hotspot.icon}
-            className="w-6 h-6"
-            style={{ color: hotspot.accent }}
-          />
-        </span>
-      </div>
-
-      {/* Point ID & Optional Lens Badge */}
-      <div className="flex items-center gap-1.5 mb-1">
-        <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-          {hotspot.id}
-        </span>
-        {hotspot.sourceData && (
-          <span
-            className="rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase"
-            style={{
-              backgroundColor: `${hotspot.accent}28`,
-              color: hotspot.accent
-            }}
-          >
-            {hotspot.sourceData.lens}
-          </span>
-        )}
-        {hotspot.isHighlighted && (
-          <span className="rounded-md bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-extrabold uppercase text-amber-300">
-            Key Focus
-          </span>
-        )}
-      </div>
-
-      {/* Short Point Label (Max 6 words) */}
-      <span className="text-base sm:text-lg font-extrabold text-white leading-snug group-hover:text-teal-200 transition-colors">
-        {hotspot.label}
-      </span>
-
-      {/* Optional 1-line Hover / Focus Teaser */}
-      {hotspot.teaser && (
-        <span className="mt-1.5 text-xs sm:text-sm font-medium text-slate-300/90 opacity-85 group-hover:opacity-100 transition-opacity line-clamp-1">
-          {hotspot.teaser}
-        </span>
-      )}
-    </button>
-  );
-};
+type A3Orientation = 'landscape' | 'portrait';
 
 export default function App() {
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [activeChapterId, setActiveChapterId] = useState<number>(0);
+  const [orientation, setOrientation] = useState<A3Orientation>('landscape');
+  const [scale, setScale] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Dive & Detail Scene State
-  const [divingHotspotId, setDivingHotspotId] = useState<string | null>(null);
+  // Active expanded box & smooth click ripple state
   const [openHotspotId, setOpenHotspotId] = useState<string | null>(null);
   const [returnFromSourceId, setReturnFromSourceId] = useState<string | null>(null);
-  const [diveOrigin, setDiveOrigin] = useState({ x: 720, y: 450, accent: '#14B8A6' });
+  const [diveOrigin, setDiveOrigin] = useState({ x: 720, y: 450, accent: '#00BDEB' });
+  const [sourceRect, setSourceRect] = useState<SourceBoxRect | null>(null);
+  const [activeBurst, setActiveBurst] = useState<ClickBurstEvent | null>(null);
+
+  const stageContainerRef = useRef<HTMLDivElement | null>(null);
   const lastClickedTriggerRef = useRef<HTMLButtonElement | null>(null);
 
-  // Chapter 5: Game Focus Filter & Progressive Unlocking Toggle
-  const [gameFocusFilter, setGameFocusFilter] = useState<
-    'All' | 'Memory' | 'Attention' | 'Association' | 'Reminiscence'
-  >('All');
-  const [unlockedShelfStage, setUnlockedShelfStage] = useState<'starter' | 'expanded'>('expanded');
+  // True A3 aspect ratio dimensions (1.414 : 1)
+  const posterWidth = orientation === 'landscape' ? 1640 : 1120;
+  const posterHeight = orientation === 'landscape' ? 1160 : 1584;
 
-  // Chapter 6: Older Adult View vs Caregiver View Toggle
-  const [experienceViewMode, setExperienceViewMode] = useState<'older-adult' | 'caregiver'>(
-    'older-adult'
-  );
-
-  // Chapter 9: Source Library Lens Filter
-  const [sourceLensFilter, setSourceLensFilter] = useState<'ALL' | LensCategory>('ALL');
-
-  // Track scroll progress & active chapter
+  // Automatically scale the entire A3 sheet to fit the viewport without any scrolling
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      const docHeight =
-        document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const progress = docHeight > 0 ? Math.min(1, Math.max(0, scrollTop / docHeight)) : 0;
-      setScrollProgress(progress);
-
-      // Determine active chapter by section offset
-      const sections = document.querySelectorAll<HTMLElement>('[data-chapter-section]');
-      let currentId = 0;
-      for (const sec of Array.from(sections)) {
-        const rect = sec.getBoundingClientRect();
-        if (rect.top <= window.innerHeight * 0.45) {
-          currentId = Number(sec.dataset.chapterSection || 0);
-        }
-      }
-      setActiveChapterId(currentId);
+    const updateScale = () => {
+      if (!stageContainerRef.current) return;
+      const availW = stageContainerRef.current.clientWidth - 24;
+      const availH = stageContainerRef.current.clientHeight - 20;
+      const scaleX = availW / posterWidth;
+      const scaleY = availH / posterHeight;
+      setScale(Math.max(0.25, Math.min(scaleX, scaleY)));
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Lock body scroll while DetailSceneModal is open
-  useEffect(() => {
-    if (openHotspotId) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    if (stageContainerRef.current) {
+      observer.observe(stageContainerRef.current);
     }
+    window.addEventListener('resize', updateScale);
     return () => {
-      document.body.style.overflow = '';
+      observer.disconnect();
+      window.removeEventListener('resize', updateScale);
     };
-  }, [openHotspotId]);
-
-  const activeChapterAccent = useMemo(() => {
-    if (activeChapterId === 0) return '#14B8A6';
-    const found = POSTER_DATA.chapters.find((c) => c.id === activeChapterId);
-    return found ? found.accent : '#14B8A6';
-  }, [activeChapterId]);
+  }, [posterWidth, posterHeight]);
 
   const activeHotspotLookup = useMemo(
     () => (openHotspotId ? findHotspotById(openHotspotId) : null),
     [openHotspotId]
   );
 
-  const handleDiveIntoHotspot = (
-    hotspot: HotspotItem,
-    e?: React.MouseEvent<HTMLButtonElement>
+  // Zero-delay, 60fps smooth click handler
+  const handleBoxClick = (
+    hotspotId: string,
+    e?: React.MouseEvent<HTMLButtonElement | HTMLDivElement>
   ) => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const found = findHotspotById(hotspotId);
+    if (!found) return;
+    const { hotspot } = found;
+
+    let clickX = Math.round(window.innerWidth / 2);
+    let clickY = Math.round(window.innerHeight / 2);
+    let rect: SourceBoxRect = {
+      left: clickX - 80,
+      top: clickY - 28,
+      width: 160,
+      height: 56
+    };
+
     if (e?.currentTarget) {
-      lastClickedTriggerRef.current = e.currentTarget;
-      const rect = e.currentTarget.getBoundingClientRect();
-      setDiveOrigin({
-        x: Math.round(rect.left + rect.width / 2),
-        y: Math.round(rect.top + rect.height / 2),
-        accent: hotspot.accent
-      });
-    } else {
-      setDiveOrigin({
-        x: Math.round(window.innerWidth / 2),
-        y: Math.round(window.innerHeight / 2),
-        accent: hotspot.accent
-      });
+      if (e.currentTarget instanceof HTMLButtonElement) {
+        lastClickedTriggerRef.current = e.currentTarget;
+      }
+      const domRect = e.currentTarget.getBoundingClientRect();
+      clickX = Math.round(e.clientX || domRect.left + domRect.width / 2);
+      clickY = Math.round(e.clientY || domRect.top + domRect.height / 2);
+      rect = {
+        left: Math.round(domRect.left),
+        top: Math.round(domRect.top),
+        width: Math.round(domRect.width),
+        height: Math.round(domRect.height)
+      };
     }
 
+    setDiveOrigin({ x: clickX, y: clickY, accent: hotspot.accent });
+    setSourceRect(rect);
     setReturnFromSourceId(null);
 
-    if (prefersReducedMotion) {
-      setOpenHotspotId(hotspot.id);
-      return;
-    }
+    // Open modal immediately on the same frame for silky-smooth spring expansion
+    setOpenHotspotId(hotspot.id);
 
-    setDivingHotspotId(hotspot.id);
+    // Trigger lightweight GPU ripple ring
+    setActiveBurst({
+      id: Date.now(),
+      x: clickX,
+      y: clickY,
+      accent: hotspot.accent,
+      label: hotspot.label,
+      rect
+    });
+
     setTimeout(() => {
-      setOpenHotspotId(hotspot.id);
-      setDivingHotspotId(null);
-    }, DIVE_PRE_DELAY_MS);
+      setActiveBurst(null);
+    }, 480);
   };
 
   const handleSelectHotspotInsideModal = (targetId: string, isFromCitationChip?: boolean) => {
@@ -290,794 +140,706 @@ export default function App() {
     setReturnFromSourceId(null);
     setTimeout(() => {
       lastClickedTriggerRef.current?.focus();
-    }, 60);
+    }, 40);
   };
 
-  const scrollToChapter = (chapterId: number) => {
-    const el = document.getElementById(`chapter-${chapterId}`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+      setIsFullscreen(false);
     }
   };
 
   const diveCanvasState: DiveCanvasState = {
-    isDiving: Boolean(divingHotspotId),
+    isDiving: Boolean(activeBurst),
     isDetailOpen: Boolean(openHotspotId),
     originX: diveOrigin.x,
     originY: diveOrigin.y,
     accent: diveOrigin.accent
   };
 
+  // Helper to render a clickable Canva box / bullet item
+  const renderMiniBox = (
+    id: string,
+    customLabel?: string,
+    variant: 'light' | 'navy' | 'teal' | 'amber' | 'emerald' | 'rose' = 'light',
+    subtitle?: string
+  ) => {
+    const found = findHotspotById(id);
+    if (!found) return null;
+    const h: HotspotItem = found.hotspot;
+
+    const variantStyles = {
+      light:
+        'bg-sky-50/95 hover:bg-sky-100 border-sky-200/90 text-[#071F3D] shadow-sm',
+      navy:
+        'bg-[#0D2E59] hover:bg-[#133B70] border-sky-400/40 text-white shadow-sm',
+      teal:
+        'bg-teal-50/95 hover:bg-teal-100 border-teal-300 text-[#071F3D] shadow-sm',
+      amber:
+        'bg-amber-50/95 hover:bg-amber-100 border-amber-300 text-[#071F3D] shadow-sm',
+      emerald:
+        'bg-emerald-50/95 hover:bg-emerald-100 border-emerald-300 text-[#071F3D] shadow-sm',
+      rose:
+        'bg-rose-50/95 hover:bg-rose-100 border-rose-300 text-[#071F3D] shadow-sm'
+    }[variant];
+
+    return (
+      <button
+        key={id}
+        type="button"
+        data-testid={`hotspot-${id}`}
+        onClick={(e) => handleBoxClick(id, e)}
+        className={`canva-box-interactive group flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left cursor-pointer ${variantStyles}`}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg"
+            style={{
+              backgroundColor: `${h.accent}22`,
+              color: variant === 'navy' ? '#38BDF8' : h.accent
+            }}
+          >
+            <HotspotIcon name={h.icon} className="w-3.5 h-3.5" />
+          </span>
+          <div className="min-w-0">
+            <div className="text-[12.5px] font-extrabold leading-tight truncate">
+              {customLabel || h.label}
+            </div>
+            {subtitle && (
+              <div
+                className={`text-[10.5px] leading-tight truncate mt-0.5 ${
+                  variant === 'navy' ? 'text-sky-200/85' : 'text-slate-500'
+                }`}
+              >
+                {subtitle}
+              </div>
+            )}
+          </div>
+        </div>
+        <span className="shrink-0 flex h-4 w-4 items-center justify-center rounded-full bg-black/5 text-[10px] font-black opacity-65 group-hover:opacity-100 group-hover:bg-sky-500 group-hover:text-white transition">
+          ↗
+        </span>
+      </button>
+    );
+  };
+
   return (
-    <div className="relative min-h-screen text-slate-100 selection:bg-teal-400 selection:text-slate-950">
-      {/* Persistent 3D/Parallax Memory Constellation World */}
+    <div className="relative flex flex-col w-screen h-screen overflow-hidden select-none bg-[#071324]">
+      {/* Ambient Background Constellation Behind the A3 Sheet */}
       <WorldCanvas
-        scrollProgress={scrollProgress}
-        activeChapterAccent={activeChapterAccent}
+        scrollProgress={0.25}
+        activeChapterAccent={diveOrigin.accent}
         diveState={diveCanvasState}
       />
 
-      {/* Top Scroll Progress Bar */}
-      <div className="fixed top-0 left-0 right-0 z-40 h-1.5 bg-slate-900/80 backdrop-blur">
-        <div
-          className="h-full bg-gradient-to-r from-teal-400 via-sky-400 to-amber-400 transition-all duration-150"
-          style={{ width: `${Math.round(scrollProgress * 100)}%` }}
-        />
-      </div>
+      {/* Lightweight 60fps Click Ripple & Sparkle Burst */}
+      <ClickTransitionFX activeBurst={activeBurst} />
 
-      {/* Fixed Top Glass Header */}
-      <header className="fixed top-1.5 left-0 right-0 z-30 mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/75 px-4 py-2.5 backdrop-blur-xl shadow-lg">
-          <button
-            type="button"
-            onClick={() => scrollToChapter(0)}
-            className="flex items-center gap-2.5 text-left focus:outline-none"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-400/20 border border-teal-400/50 text-teal-300 font-black text-sm">
-              C
-            </span>
-            <div>
-              <span className="text-xs font-extrabold uppercase tracking-wider text-teal-300 block leading-none">
-                {POSTER_DATA.hero.courseTag}
-              </span>
-              <span className="text-sm font-bold text-white hidden sm:inline">
-                Gamified &amp; AI-Assisted Cognitive Rehabilitation
-              </span>
-            </div>
-          </button>
-
+      {/* =====================================================================
+          CANVA-STYLE TOP BAR (No-Print)
+         ===================================================================== */}
+      <header className="no-print relative z-20 flex items-center justify-between border-b border-white/10 bg-slate-950/90 px-4 py-2 text-slate-200 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-teal-500 font-black text-slate-950 text-xs shadow">
+            A3
+          </span>
           <div className="flex items-center gap-2">
-            <span className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>Click any pulsing hotspot to dive in</span>
+            <span className="text-sm font-extrabold text-white">
+              Page 1 — Cogniva Interactive A3 Poster (CC0007)
             </span>
+            <span className="hidden lg:inline-flex items-center gap-1 rounded-full bg-teal-400/15 border border-teal-400/40 px-2.5 py-0.5 text-[11px] font-bold text-teal-300">
+              <Sparkles className="w-3 h-3 text-amber-300" />
+              <span>Click any box on the A3 sheet to smoothly expand</span>
+            </span>
+          </div>
+        </div>
 
+        <div className="flex items-center gap-2">
+          {/* Quick Category Jump Pills in Header */}
+          <div className="hidden xl:flex items-center gap-1.5 mr-2">
             <button
               type="button"
-              onClick={() => scrollToChapter(5)}
-              className="rounded-xl bg-teal-400/20 border border-teal-400/40 px-3 py-1.5 text-xs font-bold text-teal-200 hover:bg-teal-400 hover:text-slate-950 transition cursor-pointer"
+              onClick={(e) => handleBoxClick('1.1', e)}
+              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-[11px] font-bold text-slate-200 transition cursor-pointer"
             >
-              05 · The Games
+              1. Problem
             </button>
             <button
               type="button"
-              onClick={() => scrollToChapter(9)}
-              className="rounded-xl bg-sky-400/20 border border-sky-400/40 px-3 py-1.5 text-xs font-bold text-sky-200 hover:bg-sky-400 hover:text-slate-950 transition cursor-pointer"
+              onClick={(e) => handleBoxClick('2.3', e)}
+              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-[11px] font-bold text-teal-300 transition cursor-pointer"
             >
-              09 · 18 Sources
+              2. Solution &amp; Games
+            </button>
+            <button
+              type="button"
+              onClick={(e) => handleBoxClick('3.1', e)}
+              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-[11px] font-bold text-sky-300 transition cursor-pointer"
+            >
+              3. Three Lenses
+            </button>
+            <button
+              type="button"
+              onClick={(e) => handleBoxClick('4.1', e)}
+              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300 transition cursor-pointer"
+            >
+              4. Advantages
+            </button>
+            <button
+              type="button"
+              onClick={(e) => handleBoxClick('5.1', e)}
+              className="rounded-lg bg-white/5 hover:bg-white/15 px-2.5 py-1 text-[11px] font-bold text-rose-300 transition cursor-pointer"
+            >
+              5. Limitations
             </button>
           </div>
+
+          {/* A3 Format Switcher: Wide A3 vs Canva Portrait A3 */}
+          <div
+            className="inline-flex rounded-xl border border-white/15 bg-slate-900 p-0.5"
+            role="group"
+            aria-label="A3 orientation mode"
+          >
+            <button
+              type="button"
+              onClick={() => setOrientation('landscape')}
+              className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                orientation === 'landscape'
+                  ? 'bg-cyan-400 text-slate-950 shadow'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              A3 Wide
+            </button>
+            <button
+              type="button"
+              onClick={() => setOrientation('portrait')}
+              className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                orientation === 'portrait'
+                  ? 'bg-cyan-400 text-slate-950 shadow'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              Canva A3 Portrait
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={(e) => handleBoxClick('9.1', e)}
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-sky-400/40 bg-sky-400/15 px-3 py-1.5 text-xs font-bold text-sky-200 hover:bg-sky-400 hover:text-slate-950 transition cursor-pointer"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>18 Sources</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="hidden md:inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-slate-900 px-2.5 py-1.5 text-xs font-bold text-slate-200 hover:bg-slate-800 transition cursor-pointer"
+            title="Print Single-Page A3 Poster"
+          >
+            <Printer className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Print A3</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            aria-label="Toggle fullscreen"
+            className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-slate-900 p-1.5 text-slate-200 hover:bg-slate-800 transition cursor-pointer"
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
         </div>
       </header>
 
-      {/* Fixed Right Chapter-Dot Navigation Rail */}
-      <nav
-        aria-label="Chapter navigation"
-        className="fixed right-3.5 top-1/2 -translate-y-1/2 z-30 hidden xl:flex flex-col items-center gap-3 rounded-full border border-white/10 bg-slate-950/80 px-2.5 py-3.5 backdrop-blur-md shadow-xl"
+      {/* =====================================================================
+          SINGLE-SCREEN PROPORTIONAL A3 STAGE (Zero Scrolling Needed)
+         ===================================================================== */}
+      <main
+        ref={stageContainerRef}
+        className="relative z-10 flex-1 flex items-center justify-center overflow-hidden p-2"
       >
-        <button
-          type="button"
-          onClick={() => scrollToChapter(0)}
-          aria-label="Jump to Hero"
-          className="group relative flex items-center justify-center p-0.5 cursor-pointer"
+        <div
+          id="canva-a3-sheet"
+          style={{
+            width: `${posterWidth}px`,
+            height: `${posterHeight}px`,
+            transform: `scale(${scale * (openHotspotId ? 0.985 : 1)})`,
+            transformOrigin: 'center center',
+            transition: 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease',
+            willChange: 'transform'
+          }}
+          className={`relative flex flex-col justify-between rounded-[22px] bg-[#DEF2F4] text-[#071F3D] shadow-[0_25px_90px_rgba(0,0,0,0.65)] ring-4 ring-white/40 overflow-hidden p-5 ${
+            openHotspotId ? 'opacity-80' : 'opacity-100'
+          }`}
         >
-          <span
-            className={`pointer-events-none absolute right-8 rounded-lg border border-white/10 bg-slate-950/95 px-2.5 py-1 text-xs font-bold whitespace-nowrap shadow-lg transition-opacity ${
-              activeChapterId === 0
-                ? 'opacity-100 text-teal-300'
-                : 'opacity-0 group-hover:opacity-100 text-slate-200'
+          {/* =================================================================
+              TOP HERO BANNER (Original Image A + Interactive Game Callouts)
+             ================================================================= */}
+          <div
+            className={`relative w-full overflow-hidden rounded-2xl border-2 border-white shadow-md shrink-0 ${
+              orientation === 'landscape' ? 'h-[195px]' : 'h-[235px]'
             }`}
           >
-            00 · Hero
-          </span>
-          <span
-            className={`h-3 w-3 rounded-full transition-all ${
-              activeChapterId === 0
-                ? 'bg-teal-400 scale-125 ring-4 ring-teal-400/30'
-                : 'bg-slate-600 group-hover:bg-slate-400'
-            }`}
-          />
-        </button>
+            <img
+              src="/assets/aistudio/image_7924f9f4.png"
+              alt="cogniva. Empowering Minds. Enriching Lives. Gamified & AI-Assisted Cognitive Rehabilitation"
+              className="w-full h-full object-cover object-center"
+            />
 
-        {POSTER_DATA.chapters.map((chap) => {
-          const isActive = activeChapterId === chap.id;
-          return (
-            <button
-              key={chap.id}
-              type="button"
-              onClick={() => scrollToChapter(chap.id)}
-              aria-label={`Jump to ${chap.navLabel}`}
-              className="group relative flex items-center justify-center p-0.5 cursor-pointer"
-            >
-              <span
-                className={`pointer-events-none absolute right-8 rounded-lg border border-white/10 bg-slate-950/95 px-2.5 py-1 text-xs font-bold whitespace-nowrap shadow-lg transition-opacity ${
-                  isActive
-                    ? 'opacity-100 text-white'
-                    : 'opacity-0 group-hover:opacity-100 text-slate-200'
-                }`}
-              >
-                {chap.navLabel}
-              </span>
-              <span
-                className="h-3 w-3 rounded-full transition-all"
-                style={{
-                  backgroundColor: isActive ? chap.accent : '#475569',
-                  transform: isActive ? 'scale(1.3)' : 'scale(1)',
-                  boxShadow: isActive ? `0 0 12px ${chap.accent}` : 'none'
-                }}
-              />
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* MAIN SURFACE CHAPTERS */}
-      <main className="relative z-10">
-        {/* =========================================================
-            CHAPTER 0 — HERO
-           ========================================================= */}
-        <section
-          id="chapter-0"
-          data-chapter-section="0"
-          className="relative min-h-screen flex flex-col justify-between px-5 pt-28 pb-12 sm:px-10 max-w-6xl mx-auto"
-        >
-          <div className="my-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            <div className="lg:col-span-8 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-teal-400/40 bg-teal-400/15 px-4 py-1.5 text-sm font-extrabold uppercase tracking-widest text-teal-200">
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                <span>{POSTER_DATA.hero.courseTag}</span>
-              </div>
-
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.06]">
-                {POSTER_DATA.hero.title}
-              </h1>
-
-              {/* One-line Pitch (Always Visible on Surface) */}
-              <p className="text-xl sm:text-2xl font-medium text-slate-200 leading-relaxed max-w-3xl border-l-4 border-teal-400 pl-5 py-1">
-                {POSTER_DATA.hero.pitch}
-              </p>
-
-              <div className="flex flex-wrap items-center gap-4 pt-2">
-                <button
-                  type="button"
-                  onClick={() => scrollToChapter(1)}
-                  className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-teal-400 to-sky-400 px-6 py-4 text-lg font-black text-slate-950 shadow-xl shadow-teal-950/60 hover:brightness-110 transition cursor-pointer"
-                >
-                  <span>{POSTER_DATA.hero.scrollCue}</span>
-                  <ChevronDown className="w-5 h-5 animate-bounce" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => scrollToChapter(5)}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-slate-900/80 px-5 py-4 text-base font-bold text-white hover:border-teal-400/60 transition cursor-pointer"
-                >
-                  <Gamepad2 className="w-5 h-5 text-teal-300" />
-                  <span>Try Playable Games (Ch. 5)</span>
-                </button>
-              </div>
+            <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-[#071F3D]/90 border border-cyan-300/50 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wider text-cyan-200 backdrop-blur-md shadow">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>NTU CC0007 · Gamified &amp; AI-Assisted Cognitive Rehabilitation</span>
             </div>
 
-            {/* Friendly Cartoon Dog Mascot (waves + notification ping) */}
-            <div className="lg:col-span-4 flex flex-col items-center justify-center">
-              <div className="rounded-3xl border border-white/15 bg-slate-900/65 p-6 backdrop-blur-xl text-center shadow-2xl">
-                <DogMascot
-                  mode="ping"
-                  size="lg"
-                  pingNotificationText="Hi! I'm Kopi, your gentle activity companion. Tap any glowing hotspot as you scroll to dive in!"
-                />
-                <div className="mt-3 text-xs font-bold uppercase tracking-widest text-teal-300">
-                  Interactive Companion Mascot · Tap Kopi!
-                </div>
+            <div className="absolute bottom-2.5 left-3 right-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-[#071F3D]/85 border border-white/20 px-3 py-1 text-[11px] font-bold text-white backdrop-blur-md">
+                <span className="text-cyan-300 font-black">Team:</span>
+                <span>{POSTER_DATA.hero.team.join(' · ')}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => handleBoxClick('2.3', e)}
+                  className="canva-box-interactive inline-flex items-center gap-1.5 rounded-xl bg-amber-400 px-3 py-1 text-xs font-black text-slate-950 shadow-md cursor-pointer"
+                >
+                  <Gamepad2 className="w-3.5 h-3.5" />
+                  <span>Play Mahjong Test Game</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleBoxClick('2.4', e)}
+                  className="canva-box-interactive inline-flex items-center gap-1.5 rounded-xl bg-cyan-400 px-3 py-1 text-xs font-black text-slate-950 shadow-md cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Play Find the Differences</span>
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Team Names at Edge of Hero */}
-          <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5 text-sm text-slate-300">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-bold uppercase tracking-wider text-teal-300">
-                Project Team:
-              </span>
-              <span>{POSTER_DATA.hero.team.join(' · ')}</span>
-            </div>
-            <div className="text-xs uppercase tracking-widest text-slate-400">
-              Surface &gt; Dive &gt; Detail Interactive Poster
-            </div>
-          </div>
-        </section>
-
-        {/* =========================================================
-            CHAPTERS 1 TO 10
-           ========================================================= */}
-        {POSTER_DATA.chapters.map((chapter) => {
-          const isDivingOut = Boolean(divingHotspotId);
-
-          return (
-            <section
-              key={chapter.id}
-              id={`chapter-${chapter.id}`}
-              data-chapter-section={chapter.id}
-              className="relative min-h-[88vh] flex flex-col justify-center px-5 py-24 sm:px-10 max-w-6xl mx-auto"
-            >
-              {/* Chapter Surface Header */}
-              <div className="max-w-3xl mb-12">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-900/80 px-3.5 py-1 text-xs font-extrabold uppercase tracking-widest mb-3"
-                  style={{ color: chapter.accent }}
-                >
-                  <span>{chapter.kicker}</span>
-                  <span>·</span>
-                  <span className="text-slate-400">{chapter.worldRegionName}</span>
+          {/* =================================================================
+              CATEGORY 1: PROBLEM STATEMENT (PROOF WHY)
+              - Left White Canva Card: Focused Problem & Empirical Proof
+              - Right Deep Navy Canva Card: Three Participation Barriers & Gap
+             ================================================================= */}
+          <div className="grid grid-cols-12 gap-3.5 my-2.5 shrink-0">
+            {/* Left White Rounded Canva Card: Focused Problem */}
+            <div className="col-span-7 rounded-[22px] bg-white border border-cyan-200/80 px-5 py-3.5 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-[20px] font-extrabold text-[#1E88E5] tracking-tight leading-snug">
+                    Focused problem (Proof why)
+                  </h2>
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full">
+                    01 · Problem Statement
+                  </span>
                 </div>
-
-                <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
-                  {chapter.heading}
-                </h2>
-
-                {chapter.subline && (
-                  <p className="mt-3 text-lg sm:text-xl font-medium text-slate-300 leading-relaxed">
-                    {chapter.subline}
-                  </p>
-                )}
-
-                {chapter.alwaysVisibleCard && (
-                  <div className="mt-5 rounded-3xl border border-amber-400/40 bg-slate-900/85 p-6 shadow-xl backdrop-blur-md">
-                    <div className="text-xs font-bold uppercase tracking-widest text-amber-300 mb-2">
-                      Core Problem Statement
-                    </div>
-                    <p className="text-lg sm:text-xl font-medium text-slate-100 leading-relaxed">
-                      {chapter.alwaysVisibleCard}
-                    </p>
-                  </div>
-                )}
+                <div className="text-[16px] font-extrabold text-[#071F3D] mt-0.5">
+                  The struggle to keep going at home
+                </div>
+                <p className="text-[13px] font-medium text-slate-700 leading-snug mt-0.5">
+                  Digital cognitive interventions show promise, but regular participation can be
+                  difficult for older adults with early-stage dementia in Singapore (53,000 in 2020
+                  → 80,000 by 2030).
+                </p>
+                <div className="h-[2px] w-full bg-[#1E88E5]/60 my-2 rounded-full" />
+                <p className="text-[12.5px] font-bold text-[#1E88E5]">
+                  Our focus: usability, motivation and personalisation in everyday routines.
+                </p>
               </div>
 
-              {/* ---------------------------------------------------------
-                  CHAPTER 3 SPECIAL SURFACE: 5 Pillars Ring around Glowing Home
-                 --------------------------------------------------------- */}
-              {chapter.id === 3 && (
-                <div className="space-y-8">
-                  <div className="mx-auto flex flex-col items-center justify-center rounded-3xl border border-teal-400/30 bg-slate-900/60 p-6 max-w-md text-center backdrop-blur-md">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-400/20 border border-teal-400 text-teal-300 mb-2 shadow-[0_0_30px_rgba(20,184,166,0.4)]">
-                      <Home className="w-8 h-8" />
-                    </div>
-                    <div className="text-base font-extrabold text-white">
-                      Calm Home Rehabilitation Hub
-                    </div>
-                    <div className="text-xs text-slate-300">
-                      Click any of the 5 pillars below to inspect how the platform works
-                    </div>
-                  </div>
+              <div className="grid grid-cols-2 gap-2.5 mt-2.5">
+                {renderMiniBox(
+                  '1.1',
+                  "1.1 Proof: Singapore's 53k → 80k Need",
+                  'amber',
+                  'GovTech (2026) & MOH (2023) projections'
+                )}
+                {renderMiniBox(
+                  '1.2',
+                  '1.2 Proof: 55 RCTs on Engagement',
+                  'teal',
+                  'Li et al. (2024) meta-analysis on adherence'
+                )}
+              </div>
+            </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-                    {chapter.hotspots.map((h, i) => (
-                      <MagneticHotspotButton
-                        key={h.id}
-                        hotspot={h}
-                        index={i}
-                        isDivingOut={isDivingOut}
-                        isActiveTarget={divingHotspotId === h.id}
-                        onDive={handleDiveIntoHotspot}
-                      />
-                    ))}
-                  </div>
+            {/* Right Deep Navy Rounded Canva Card: Three Participation Barriers */}
+            <div className="col-span-5 rounded-[22px] bg-[#061F3E] text-white px-5 py-3.5 shadow-md flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-[19px] font-extrabold text-[#38BDF8] tracking-tight">
+                    Three Participation Barriers
+                  </h2>
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-cyan-200 bg-white/10 px-2.5 py-0.5 rounded-full">
+                    Why Tools Fail
+                  </span>
                 </div>
-              )}
 
-              {/* ---------------------------------------------------------
-                  CHAPTER 4 SPECIAL SURFACE: AI Orbit + Highlighted Safety Shield
-                 --------------------------------------------------------- */}
-              {chapter.id === 4 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {chapter.hotspots.map((h, i) => (
-                    <MagneticHotspotButton
-                      key={h.id}
-                      hotspot={h}
-                      index={i}
-                      isDivingOut={isDivingOut}
-                      isActiveTarget={divingHotspotId === h.id}
-                      onDive={handleDiveIntoHotspot}
-                      variant={h.id === '4.6' ? 'shield' : 'default'}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* ---------------------------------------------------------
-                  CHAPTER 5 SPECIAL SURFACE: THE GAMES (Product Showcase)
-                 --------------------------------------------------------- */}
-              {chapter.id === 5 && (
-                <div className="space-y-10">
-                  {/* Shared Features Strip */}
-                  <div className="rounded-2xl border border-teal-400/35 bg-teal-950/40 px-5 py-4 text-sm sm:text-base font-semibold text-teal-100 shadow-lg backdrop-blur-md">
-                    <span className="font-black uppercase tracking-wider text-teal-300 mr-2">
-                      Every game includes:
-                    </span>
-                    Hints · Pause · Replay instructions · Easier option · Friendly mascot encouragement · Post-game rating · No timers, penalties or leaderboards.
-                  </div>
-
-                  {/* Focus Filter Chips + Progressive Unlocking Visual */}
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter games by cognitive focus">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 mr-1">
-                        <Filter className="w-3.5 h-3.5 text-teal-300" />
-                        <span>Focus:</span>
+                <ul className="mt-1.5 space-y-1 text-[12.5px] leading-tight">
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-cyan-400 font-black">•</span>
+                    <div>
+                      <span className="font-extrabold text-white">Usability: </span>
+                      <span className="text-slate-200">
+                        Confusing interfaces and instructions require extra time and help.
                       </span>
-                      {(['All', 'Memory', 'Attention', 'Association', 'Reminiscence'] as const).map(
-                        (tag) => (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => setGameFocusFilter(tag)}
-                            className={`rounded-xl px-3.5 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${
-                              gameFocusFilter === tag
-                                ? 'bg-teal-400 text-slate-950 shadow-md'
-                                : 'bg-slate-900/80 border border-white/15 text-slate-200 hover:border-teal-400/50'
-                            }`}
-                          >
-                            {tag}
-                          </button>
-                        )
-                      )}
                     </div>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-cyan-400 font-black">•</span>
+                    <div>
+                      <span className="font-extrabold text-white">Motivation: </span>
+                      <span className="text-slate-200">
+                        Interest may fade without warm feedback and familiar themes.
+                      </span>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-cyan-400 font-black">•</span>
+                    <div>
+                      <span className="font-extrabold text-white">Personalisation: </span>
+                      <span className="text-slate-200">
+                        One-size-fits-all activities may not suit individual abilities and needs.
+                      </span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
 
-                    {/* Progressive Unlocking Toggle */}
-                    <div className="flex items-center gap-2 rounded-2xl border border-amber-400/35 bg-slate-900/85 p-2">
-                      <button
-                        type="button"
-                        onClick={() => setUnlockedShelfStage('starter')}
-                        className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
-                          unlockedShelfStage === 'starter'
-                            ? 'bg-amber-400 text-slate-950'
-                            : 'text-slate-300 hover:text-white'
-                        }`}
-                      >
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>Start with a small set (Day 1)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setUnlockedShelfStage('expanded')}
-                        className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
-                          unlockedShelfStage === 'expanded'
-                            ? 'bg-teal-400 text-slate-950'
-                            : 'text-slate-300 hover:text-white'
-                        }`}
-                      >
-                        <Unlock className="w-3.5 h-3.5" />
-                        <span>Unlock more as you feel comfortable</span>
-                      </button>
-                    </div>
+              <div className="grid grid-cols-2 gap-2 mt-2.5">
+                {renderMiniBox(
+                  '1.3',
+                  '1.3 Proof: Digital UX Barriers',
+                  'navy',
+                  'Contreras-Somoza (2021) & Kwek (2024)'
+                )}
+                {renderMiniBox(
+                  '1.4',
+                  '1.4 The Home Routine Gap ★',
+                  'navy',
+                  'Clare et al. (2023) independent home use'
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* =================================================================
+              MAIN CANVA A3 BODY: 3 COLUMNS
+              - Col 1 (4 cols): CATEGORY 3 — INTERDISCIPLINARY LENSES (STEM, BIZ/GOV, SOCIAL SCIENCE)
+              - Col 2 (4 cols): CATEGORY 4 — ADVANTAGES & CATEGORY 5 — POTENTIAL LIMITATIONS
+              - Col 3 (4 cols): CATEGORY 2 — SOLUTION (INCLUDING THE TEST GAMES & IMAGE B)
+             ================================================================= */}
+          <div className="grid grid-cols-12 gap-3.5 flex-1 min-h-0">
+            {/* ---------------------------------------------------------------
+                COLUMN 1: CATEGORY 3 — 3 INTERDISCIPLINARY LENSES
+               --------------------------------------------------------------- */}
+            <div className="col-span-4 flex flex-col justify-between gap-2.5 min-h-0">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-[16px] font-black tracking-wide uppercase text-[#071F3D]">
+                  03 · INTERDISCIPLINARY LENSES
+                </h3>
+                <span className="text-[11px] font-bold text-sky-800">Click any box to expand</span>
+              </div>
+
+              {/* STEM Card */}
+              <div className="flex-1 rounded-[18px] bg-white border border-sky-200 px-4 py-2.5 shadow-sm flex flex-col justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#155EEF] text-white shadow">
+                    <Sparkles className="w-5 h-5" />
                   </div>
-
-                  {/* PART A — 5 Core Game Cards (5.1 to 5.5) */}
                   <div>
-                    <div className="text-xs font-bold uppercase tracking-widest text-teal-300 mb-4">
-                      Part A · Five Core Games (Click any card to dive into its Game Stage &amp; playable demo)
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {chapter.hotspots
-                        .filter((h) => h.gameData?.kind === 'core')
-                        .filter(
-                          (h) =>
-                            gameFocusFilter === 'All' ||
-                            h.gameData?.focusTag === gameFocusFilter
-                        )
-                        .map((h, idx) => {
-                          const isStarterLocked =
-                            unlockedShelfStage === 'starter' && idx >= 2;
-                          return (
-                            <button
-                              key={h.id}
-                              type="button"
-                              data-testid={`hotspot-${h.id}`}
-                              onClick={(e) => handleDiveIntoHotspot(h, e)}
-                              className={`group relative flex flex-col justify-between rounded-3xl border p-6 text-left transition-all duration-300 cursor-pointer ${
-                                isStarterLocked
-                                  ? 'border-white/10 bg-slate-900/45 opacity-75 hover:opacity-100'
-                                  : 'border-white/15 bg-slate-900/85 hover:-translate-y-1 hover:border-teal-400/70 shadow-xl'
-                              }`}
-                            >
-                              <div>
-                                <div className="flex items-center justify-between gap-2 mb-4">
-                                  <span
-                                    className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 shadow-md transition-transform group-hover:scale-110"
-                                    style={{
-                                      backgroundColor: `${h.accent}22`,
-                                      borderColor: h.accent
-                                    }}
-                                  >
-                                    <HotspotIcon
-                                      name={h.icon}
-                                      className="w-7 h-7"
-                                      style={{ color: h.accent }}
-                                    />
-                                  </span>
-
-                                  <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-bold text-teal-200">
-                                    {h.gameData?.focusTag}
-                                  </span>
-                                </div>
-
-                                <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                                  Core Game {h.id}
-                                </div>
-                                <h3 className="text-2xl font-black text-white group-hover:text-teal-200 transition-colors">
-                                  {h.label}
-                                </h3>
-                                <p className="mt-2 text-base font-medium text-slate-300 leading-snug">
-                                  {h.gameData?.hook}
-                                </p>
-                              </div>
-
-                              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-3.5 text-sm font-bold text-teal-300">
-                                <span>
-                                  {isStarterLocked
-                                    ? 'Unlocks as confidence grows · Preview'
-                                    : 'Dive in & Play Demo'}
-                                </span>
-                                <Gamepad2 className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                              </div>
-                            </button>
-                          );
-                        })}
-                    </div>
+                    <h4 className="text-[16px] font-black text-[#071F3D] leading-none">STEM</h4>
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      Adaptive Algorithms &amp; On-Device AI
+                    </span>
                   </div>
+                </div>
+                <div className="grid grid-cols-1 gap-1.5 mt-1.5">
+                  {renderMiniBox('3.1', '• Auto-Adjusting Game Difficulty (75–85%)', 'light')}
+                  {renderMiniBox('3.2', '• On-Device Frustration Detection', 'light')}
+                  {renderMiniBox('3.3', '• Personalized Game & Summary Engine', 'light')}
+                </div>
+              </div>
 
-                  {/* PART B — 5 Pipeline Activities (5.6 to 5.10) */}
+              {/* BIZ / GOV Card */}
+              <div className="flex-1 rounded-[18px] bg-white border border-teal-200 px-4 py-2.5 shadow-sm flex flex-col justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00A896] text-white shadow">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
                   <div>
-                    <div className="text-xs font-bold uppercase tracking-widest text-amber-300 mb-4">
-                      Part B · More Activities in the Pipeline (5.6 – 5.10)
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                      {chapter.hotspots
-                        .filter((h) => h.gameData?.kind === 'pipeline')
-                        .filter(
-                          (h) =>
-                            gameFocusFilter === 'All' ||
-                            h.gameData?.focusTag === gameFocusFilter
-                        )
-                        .map((h, i) => (
-                          <MagneticHotspotButton
-                            key={h.id}
-                            hotspot={h}
-                            index={i}
-                            isDivingOut={isDivingOut}
-                            isActiveTarget={divingHotspotId === h.id}
-                            onDive={handleDiveIntoHotspot}
-                            variant="compact"
-                          />
-                        ))}
-                    </div>
+                    <h4 className="text-[16px] font-black text-[#071F3D] leading-none">
+                      BIZ / GOV
+                    </h4>
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      National Ageing Strategy &amp; Healthcare AI Rules
+                    </span>
                   </div>
                 </div>
-              )}
+                <div className="grid grid-cols-1 gap-1.5 mt-1.5">
+                  {renderMiniBox('3.4', "• Fits Singapore's Ageing Plans (MOH)", 'teal')}
+                  {renderMiniBox('3.5', '• Follows Healthcare AI Rules (AIHGle 2.0)', 'teal')}
+                  {renderMiniBox('3.6', '• Low-Cost & Built to Last (Web Delivery)', 'teal')}
+                </div>
+              </div>
 
-              {/* ---------------------------------------------------------
-                  CHAPTER 6 SPECIAL SURFACE: Interactive App Mock + View Toggle
-                 --------------------------------------------------------- */}
-              {chapter.id === 6 && (
-                <div className="space-y-8">
-                  {/* Top Row: View Mode Switcher + 3 Stress-Free Guarantee Chips */}
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div
-                      className="inline-flex rounded-2xl border border-white/15 bg-slate-900/90 p-1.5"
-                      role="group"
-                      aria-label="Switch interface walkthrough perspective"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setExperienceViewMode('older-adult')}
-                        className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition cursor-pointer ${
-                          experienceViewMode === 'older-adult'
-                            ? 'bg-teal-400 text-slate-950 shadow-md'
-                            : 'text-slate-300 hover:text-white'
-                        }`}
-                      >
-                        <Smartphone className="w-4 h-4" />
-                        <span>Older adult view (6.1 – 6.6)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setExperienceViewMode('caregiver')}
-                        className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition cursor-pointer ${
-                          experienceViewMode === 'caregiver'
-                            ? 'bg-amber-400 text-slate-950 shadow-md'
-                            : 'text-slate-300 hover:text-white'
-                        }`}
-                      >
-                        <Users className="w-4 h-4" />
-                        <span>Caregiver view (6.7 – 6.11)</span>
-                      </button>
-                    </div>
-
-                    {/* 3 Required Chips */}
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        'No leaderboards',
-                        'No missed-day penalties',
-                        'No countdown timers'
-                      ].map((chip) => (
-                        <span
-                          key={chip}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-950/50 px-3.5 py-1.5 text-xs font-bold text-emerald-200"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>{chip}</span>
-                        </span>
-                      ))}
-                    </div>
+              {/* SOCIAL SCIENCE Card */}
+              <div className="flex-1 rounded-[18px] bg-white border border-sky-200 px-4 py-2.5 shadow-sm flex flex-col justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0284C7] text-white shadow">
+                    <Heart className="w-5 h-5" />
                   </div>
-
-                  {/* Central Interactive Device Preview + Orbiting Hotspots */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                    <div className="lg:col-span-5 rounded-3xl border-2 border-white/15 bg-slate-950/90 p-6 shadow-2xl">
-                      <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
-                        <span className="text-xs font-bold uppercase tracking-wider text-teal-300">
-                          {experienceViewMode === 'older-adult'
-                            ? 'Senior Tablet Interface Preview'
-                            : 'Caregiver Companion Portal Preview'}
-                        </span>
-                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                      </div>
-
-                      {experienceViewMode === 'older-adult' ? (
-                        <div className="space-y-4">
-                          <div className="rounded-2xl bg-slate-900 p-4 border border-teal-400/30">
-                            <div className="text-xs font-bold text-amber-300">
-                              Good morning, Uncle Tan!
-                            </div>
-                            <div className="text-lg font-black text-white mt-0.5">
-                              Ready for a calm 10-minute activity?
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-2xl bg-teal-500/20 border border-teal-400/50 p-4 text-center">
-                              <div className="text-2xl font-black text-teal-300">中 / 發</div>
-                              <div className="text-sm font-bold text-white mt-1">
-                                Mahjong Tiles
-                              </div>
-                            </div>
-                            <div className="rounded-2xl bg-sky-500/20 border border-sky-400/50 p-4 text-center">
-                              <div className="text-2xl font-black text-sky-300">🫖 🐦</div>
-                              <div className="text-sm font-bold text-white mt-1">
-                                Familiar Sounds
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-slate-300">
-                            <span>Hint · Pause · Replay · Easier</span>
-                            <span className="text-teal-300">Audio Guide ON</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div className="rounded-2xl bg-slate-900 p-4 border border-amber-400/30">
-                            <div className="text-xs font-bold text-amber-300">
-                              Family &amp; Caregiver Support View
-                            </div>
-                            <div className="text-lg font-black text-white mt-0.5">
-                              3 Calm Sessions Completed This Week
-                            </div>
-                          </div>
-                          <div className="rounded-2xl bg-slate-900/90 border border-white/10 p-4 space-y-2 text-xs text-slate-300">
-                            <div className="flex justify-between font-bold text-white">
-                              <span>Uploaded Family Photos</span>
-                              <span className="text-teal-300">12 Photos Active</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Favourite Activity</span>
-                              <span className="text-amber-300">Mahjong Matching (5★)</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Comfort Band</span>
-                              <span className="text-emerald-300">81% Success (Optimal)</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {chapter.hotspots
-                        .filter((h) => h.viewMode === experienceViewMode)
-                        .map((h, i) => (
-                          <MagneticHotspotButton
-                            key={h.id}
-                            hotspot={h}
-                            index={i}
-                            isDivingOut={isDivingOut}
-                            isActiveTarget={divingHotspotId === h.id}
-                            onDive={handleDiveIntoHotspot}
-                          />
-                        ))}
-                    </div>
+                  <div>
+                    <h4 className="text-[16px] font-black text-[#071F3D] leading-none">
+                      SOCIAL SCIENCE
+                    </h4>
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      Senior Usability, Cultural Dignity &amp; Caregivers
+                    </span>
                   </div>
                 </div>
-              )}
+                <div className="grid grid-cols-1 gap-1.5 mt-1.5">
+                  {renderMiniBox('3.7', '• Zero-Friction Senior UX (One-Button)', 'light')}
+                  {renderMiniBox('3.8', '• Culturally Grounded & Dignity-First', 'light')}
+                  {renderMiniBox('3.9', '• Caregiver Partnership & Relief', 'light')}
+                </div>
+              </div>
+            </div>
 
-              {/* ---------------------------------------------------------
-                  CHAPTER 7 SPECIAL SURFACE: 3 Interdisciplinary Lens Clusters
-                 --------------------------------------------------------- */}
-              {chapter.id === 7 && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
-                  {(
-                    [
-                      {
-                        name: 'STEM',
-                        border: 'border-sky-400/40',
-                        badge: 'bg-sky-400/20 text-sky-200'
-                      },
-                      {
-                        name: 'Business & Governance',
-                        border: 'border-amber-400/40',
-                        badge: 'bg-amber-400/20 text-amber-200'
-                      },
-                      {
-                        name: 'Social Sciences & Humanities',
-                        border: 'border-rose-400/40',
-                        badge: 'bg-rose-400/20 text-rose-200'
-                      }
-                    ] as const
-                  ).map((clusterGroup) => (
-                    <div
-                      key={clusterGroup.name}
-                      className={`rounded-3xl border ${clusterGroup.border} bg-slate-900/50 p-5 space-y-4 backdrop-blur-md`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`rounded-xl px-3 py-1 text-xs font-black uppercase tracking-wider ${clusterGroup.badge}`}
-                        >
-                          {clusterGroup.name}
+            {/* ---------------------------------------------------------------
+                COLUMN 2: CATEGORY 4 — ADVANTAGES & CATEGORY 5 — POTENTIAL LIMITATIONS
+               --------------------------------------------------------------- */}
+            <div className="col-span-4 flex flex-col justify-between gap-3 min-h-0">
+              {/* CATEGORY 4: ADVANTAGES */}
+              <div className="flex-1 rounded-[20px] bg-white border-2 border-emerald-200 px-4 py-3 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500 text-white shadow">
+                        <Award className="w-4 h-4" />
+                      </span>
+                      <div>
+                        <h3 className="text-[16px] font-black uppercase text-[#071F3D] leading-none">
+                          04 · Advantages
+                        </h3>
+                        <span className="text-[11px] font-semibold text-emerald-700">
+                          Why our integrated model works at home
                         </span>
                       </div>
-                      <div className="grid grid-cols-1 gap-4">
-                        {chapter.hotspots
-                          .filter((h) => h.cluster === clusterGroup.name)
-                          .map((h, i) => (
-                            <MagneticHotspotButton
-                              key={h.id}
-                              hotspot={h}
-                              index={i}
-                              isDivingOut={isDivingOut}
-                              isActiveTarget={divingHotspotId === h.id}
-                              onDive={handleDiveIntoHotspot}
-                            />
-                          ))}
-                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* ---------------------------------------------------------
-                  CHAPTER 9 SPECIAL SURFACE: 18-Star Source Constellation
-                 --------------------------------------------------------- */}
-              {chapter.id === 9 && (
-                <div className="space-y-6">
-                  <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter 18 sources by discipline lens">
-                    {(['ALL', 'STEM', 'BIZ', 'GOV', 'SSH'] as const).map((lens) => (
-                      <button
-                        key={lens}
-                        type="button"
-                        onClick={() => setSourceLensFilter(lens)}
-                        className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-black uppercase tracking-wider transition cursor-pointer ${
-                          sourceLensFilter === lens
-                            ? 'bg-sky-400 text-slate-950 shadow-md'
-                            : 'bg-slate-900/80 border border-white/15 text-slate-300 hover:border-sky-400/50'
-                        }`}
-                      >
-                        {lens === 'ALL' ? 'All 18 Sources' : lens}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
-                    {chapter.hotspots
-                      .filter(
-                        (h) =>
-                          sourceLensFilter === 'ALL' ||
-                          h.sourceData?.lens === sourceLensFilter
-                      )
-                      .map((h, i) => (
-                        <MagneticHotspotButton
-                          key={h.id}
-                          hotspot={h}
-                          index={i}
-                          isDivingOut={isDivingOut}
-                          isActiveTarget={divingHotspotId === h.id}
-                          onDive={handleDiveIntoHotspot}
-                          variant="star"
-                        />
-                      ))}
+                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10.5px] font-extrabold text-emerald-800">
+                      4 Strengths
+                    </span>
                   </div>
                 </div>
-              )}
 
-              {/* ---------------------------------------------------------
-                  STANDARD CONSTELLATION GRID FOR CHAPTERS 1, 2, 8, 10
-                 --------------------------------------------------------- */}
-              {![3, 4, 5, 6, 7, 9].includes(chapter.id) && (
-                <div
-                  className={`grid grid-cols-1 sm:grid-cols-2 ${
-                    chapter.hotspots.length === 3
-                      ? 'lg:grid-cols-3'
-                      : 'lg:grid-cols-4'
-                  } gap-6`}
-                >
-                  {chapter.hotspots.map((h, i) => (
-                    <MagneticHotspotButton
-                      key={h.id}
-                      hotspot={h}
-                      index={i}
-                      isDivingOut={isDivingOut}
-                      isActiveTarget={divingHotspotId === h.id}
-                      onDive={handleDiveIntoHotspot}
-                    />
-                  ))}
+                <div className="grid grid-cols-1 gap-2 my-auto">
+                  {renderMiniBox(
+                    '4.1',
+                    '4.1 Sustained Intrinsic Motivation',
+                    'emerald',
+                    'No timers, penalties or leaderboards · 75–85% zone'
+                  )}
+                  {renderMiniBox(
+                    '4.2',
+                    '4.2 Lower Caregiver Burden',
+                    'teal',
+                    'On-demand AI spoken guide + brief weekly summaries'
+                  )}
+                  {renderMiniBox(
+                    '4.3',
+                    '4.3 Low Cost & Hardware-Free',
+                    'light',
+                    'Runs on existing family tablets/phones without VR gear'
+                  )}
+                  {renderMiniBox(
+                    '4.4',
+                    '4.4 Safe, Bounded & Transparent AI',
+                    'amber',
+                    'Non-diagnostic guardrails aligned with AIHGle 2.0'
+                  )}
                 </div>
-              )}
-            </section>
-          );
-        })}
+              </div>
+
+              {/* CATEGORY 5: POTENTIAL LIMITATIONS */}
+              <div className="flex-1 rounded-[20px] bg-[#061F3E] text-white border-2 border-rose-400/35 px-4 py-3 shadow-md flex flex-col justify-between">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-500 text-white shadow">
+                      <AlertTriangle className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <h3 className="text-[16px] font-black uppercase text-rose-300 leading-none">
+                        05 · Potential Limitations
+                      </h3>
+                      <span className="text-[11px] font-medium text-slate-300">
+                        Honest boundaries &amp; evaluation scope
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => handleBoxClick('9.1', e)}
+                    className="canva-box-interactive rounded-lg bg-amber-400 px-2.5 py-1 text-[10.5px] font-black text-slate-950 cursor-pointer"
+                  >
+                    18 Sources →
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 my-auto">
+                  {renderMiniBox(
+                    '5.1',
+                    '5.1 Unvalidated Prototype Proposal ★',
+                    'navy',
+                    'Requires 20-week trial (12-wk + 8-wk follow-up)'
+                  )}
+                  {renderMiniBox(
+                    '5.2',
+                    '5.2 Initial Caregiver Setup Dependency',
+                    'navy',
+                    'Needs family or AAC help to upload initial photos'
+                  )}
+                  {renderMiniBox(
+                    '5.3',
+                    '5.3 Gameplay Signals ≠ Clinical Status',
+                    'navy',
+                    'Fatigue, glare or arthritis can affect tap speed'
+                  )}
+                  {renderMiniBox(
+                    '5.4',
+                    '5.4 Scope Limited to Early-Stage / MCI',
+                    'navy',
+                    'Cannot replace clinical therapy in advanced stages'
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ---------------------------------------------------------------
+                COLUMN 3: CATEGORY 2 — SOLUTION (INCLUDING THE TEST GAMES & IMAGE B)
+               --------------------------------------------------------------- */}
+            <div className="col-span-4 flex flex-col justify-between gap-2.5 min-h-0">
+              <div className="relative flex-1 rounded-[20px] bg-white border-2 border-cyan-300 p-3 shadow-md flex flex-col justify-between overflow-hidden min-h-0">
+                <div className="flex items-center justify-between px-1 mb-1.5 shrink-0">
+                  <div>
+                    <h3 className="text-[15.5px] font-black uppercase text-[#071F3D] leading-none">
+                      02 · Solution &amp; Playable Test Games
+                    </h3>
+                    <span className="text-[11px] font-bold text-[#1E88E5]">
+                      Click any callout on the phone or test game box below
+                    </span>
+                  </div>
+                  <span className="rounded-full bg-teal-100 border border-teal-400 px-2.5 py-0.5 text-[10.5px] font-black text-teal-900">
+                    5 Test Games
+                  </span>
+                </div>
+
+                {/* Top 2 Solution Core Pillar Boxes */}
+                <div className="grid grid-cols-2 gap-1.5 mb-2 shrink-0">
+                  {renderMiniBox('2.1', "2.1 AI Activity Guide", 'teal', "'Help me understand'")}
+                  {renderMiniBox('2.2', '2.2 Adaptive Support', 'emerald', '75%–85% Comfort Band')}
+                </div>
+
+                {/* Original Image B Container with Clickable Callout Overlays */}
+                <div className="relative flex-1 w-full rounded-xl overflow-hidden bg-[#EAF7FB] flex items-center justify-center min-h-0">
+                  <img
+                    src="/assets/aistudio/image_c956a4a3.png"
+                    alt="Cogniva smartphone application mockup featuring Mahjong Matching, Find the Differences, Sequence Recall, Visual Search, Adaptive Support, and Brain Training Tools"
+                    className="max-h-full max-w-full object-contain"
+                  />
+
+                  {/* Interactive Transparent Hotspot Overlays Mapped to Image B Callouts */}
+                  {/* Top-Left: Mahjong Matching */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleBoxClick('2.3', e)}
+                    title="Click to play Mahjong Matching Test Game"
+                    className="absolute top-[14%] left-[4%] w-[24%] h-[36%] rounded-2xl border-2 border-transparent hover:border-teal-400 hover:bg-teal-400/15 transition cursor-pointer"
+                  />
+                  {/* Bottom-Left: Adaptive Support */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleBoxClick('2.2', e)}
+                    title="Click to inspect Adaptive Support (75%–85% Band)"
+                    className="absolute bottom-[6%] left-[4%] w-[24%] h-[36%] rounded-2xl border-2 border-transparent hover:border-cyan-400 hover:bg-cyan-400/15 transition cursor-pointer"
+                  />
+                  {/* Top-Right: Find the Differences */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleBoxClick('2.4', e)}
+                    title="Click to play Find the Differences Test Game"
+                    className="absolute top-[6%] right-[4%] w-[26%] h-[34%] rounded-2xl border-2 border-transparent hover:border-sky-400 hover:bg-sky-400/15 transition cursor-pointer"
+                  />
+                  {/* Middle-Right: Sequence Recall / Question of the Day */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleBoxClick('2.6', e)}
+                    title="Click to play Question of the Day Test Game"
+                    className="absolute top-[43%] right-[4%] w-[26%] h-[25%] rounded-2xl border-2 border-transparent hover:border-amber-400 hover:bg-amber-400/15 transition cursor-pointer"
+                  />
+                  {/* Bottom-Right: Brain Training Tools / Match Photos to Names */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleBoxClick('2.5', e)}
+                    title="Click to play Match Photos to Names Test Game"
+                    className="absolute bottom-[4%] right-[4%] w-[26%] h-[26%] rounded-2xl border-2 border-transparent hover:border-purple-400 hover:bg-purple-400/15 transition cursor-pointer"
+                  />
+                </div>
+
+                {/* Clickable Grid for the 5 Playable Test Games */}
+                <div className="mt-2 pt-2 border-t border-cyan-100 shrink-0">
+                  <div className="text-[10.5px] font-black uppercase tracking-wider text-slate-500 mb-1.5 px-0.5">
+                    Click any test game below to launch its playable demo:
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {renderMiniBox('2.3', 'Game 1: Mahjong Matching ★', 'amber')}
+                    {renderMiniBox('2.4', 'Game 2: Find Differences ★', 'teal')}
+                    {renderMiniBox('2.5', 'Game 3: Photo to Names ★', 'light')}
+                    {renderMiniBox('2.6', 'Game 4: Question of Day ★', 'light')}
+                  </div>
+                  <div className="mt-1.5">
+                    {renderMiniBox(
+                      '2.7',
+                      'Game 5: Familiar Everyday Sounds (Audio Demo) ★',
+                      'teal'
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
 
-      {/* =========================================================
-          FOOTER
-         ========================================================= */}
-      <footer className="relative z-10 border-t border-white/10 bg-slate-950/90 px-6 py-10 backdrop-blur-xl">
-        <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-sm sm:text-base font-semibold text-slate-300 text-center sm:text-left">
-            CC0007 · Prototype proposal · Team: Khai Liang, Qunming, Shan Xi, Keng, Qin Yan
-          </div>
-
-          <button
-            type="button"
-            onClick={() => scrollToChapter(0)}
-            className="inline-flex items-center gap-2 rounded-xl border border-teal-400/40 bg-teal-400/15 px-4 py-2 text-sm font-bold text-teal-200 hover:bg-teal-400 hover:text-slate-950 transition cursor-pointer"
-          >
-            <ArrowUp className="w-4 h-4" />
-            <span>Back to Top</span>
-          </button>
-        </div>
-      </footer>
-
-      {/* =========================================================
-          DIVE -> DETAIL SCENE MODAL
-         ========================================================= */}
-      {activeHotspotLookup && (
-        <DetailSceneModal
-          hotspot={activeHotspotLookup.hotspot}
-          chapter={activeHotspotLookup.chapter}
-          prevHotspot={activeHotspotLookup.prevHotspot}
-          nextHotspot={activeHotspotLookup.nextHotspot}
-          originX={diveOrigin.x}
-          originY={diveOrigin.y}
-          returnFromSourceHotspotId={returnFromSourceId}
-          onClose={handleCloseDetailModal}
-          onSelectHotspot={handleSelectHotspotInsideModal}
-        />
-      )}
+      {/* =====================================================================
+          EXPANDED DETAIL SCENE MODAL (Ultra-Smooth 60fps Spring Transition)
+         ===================================================================== */}
+      <AnimatePresence>
+        {activeHotspotLookup && (
+          <DetailSceneModal
+            key="detail-scene-modal"
+            hotspot={activeHotspotLookup.hotspot}
+            chapter={activeHotspotLookup.chapter}
+            prevHotspot={activeHotspotLookup.prevHotspot}
+            nextHotspot={activeHotspotLookup.nextHotspot}
+            originX={diveOrigin.x}
+            originY={diveOrigin.y}
+            sourceRect={sourceRect}
+            returnFromSourceHotspotId={returnFromSourceId}
+            onClose={handleCloseDetailModal}
+            onSelectHotspot={handleSelectHotspotInsideModal}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
