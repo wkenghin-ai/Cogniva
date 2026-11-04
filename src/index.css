@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* TWEAKABLE PALETTE & TOKENS */
+    --poster-bg: #06101E;
+    --poster-navy: #102D4B;
+    --poster-cyan: #38BDF8;
+    --poster-teal: #14B8A6;
+    --poster-gold: #F59E0B;
+    --poster-rose: #FB7185;
+    --font-display: 'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif;
+    --font-sans: 'Manrope', 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --dive-transition-ms: 680ms;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--poster-bg);
+    color: #F8FAFC;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--poster-bg);
+    color: #F8FAFC;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+@keyframes floatSlow {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes wag {
+  0%,
+  100% {
+    transform: rotate(-10deg);
+  }
+  50% {
+    transform: rotate(16deg);
+  }
+}
+
+@keyframes wavePaw {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-18deg);
+  }
+}
+
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hotspot-drift {
+  animation: floatSlow 4.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .hotspot-drift,
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

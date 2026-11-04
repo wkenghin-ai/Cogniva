@@ -1,0 +1,8 @@
+{
+  "name": "Cogniva — Interactive University Academic Poster",
+  "description": "Gamified & AI-Assisted Cognitive Activities for Older Adults with Early-Stage Dementia (NTU CC0007 Interactive Academic Research Showcase & A3 Poster)",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
